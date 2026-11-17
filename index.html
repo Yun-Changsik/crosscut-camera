@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
 <title>CrossCut Camera</title>
 
@@ -17,42 +21,60 @@
 body{
     background:black;
     overflow:hidden;
-    font-family:Arial, sans-serif;
+    font-family:Arial,sans-serif;
 }
 
 /* Camera */
 
 #camera{
-    position:absolute;
-    width:100%;
-    height:100%;
+    position:fixed;
+    top:0;
+    left:0;
+
+    width:100vw;
+    height:100vh;
+
     object-fit:cover;
+
+    background:black;
+
+    z-index:1;
 }
 
 /* Title */
 
 #title{
-    position:absolute;
-    top:10px;
+
+    position:fixed;
+
+    top:15px;
+
     width:100%;
+
     text-align:center;
+
     color:white;
+
     font-size:24px;
+
     font-weight:bold;
-    z-index:30;
+
+    z-index:20;
 }
 
-/* Controls */
+/* Sample Box */
 
-#controls{
+#panel{
 
-    position:absolute;
-    top:55px;
+    position:fixed;
+
+    top:60px;
+
     left:50%;
 
     transform:translateX(-50%);
 
-    z-index:30;
+    z-index:20;
 
     background:rgba(0,0,0,0.6);
 
@@ -60,16 +82,13 @@ body{
 
     border-radius:10px;
 
+    color:white;
+
     display:flex;
+
     flex-direction:column;
 
     gap:8px;
-
-    color:white;
-}
-
-#controls label{
-    font-size:14px;
 }
 
 #sampleId{
@@ -77,31 +96,18 @@ body{
     width:180px;
 
     padding:6px;
-
-    border:none;
-
-    border-radius:5px;
-}
-
-/* Status */
-
-#status{
-
-    text-align:center;
-    color:lime;
-    font-weight:bold;
 }
 
 /* Grid */
 
 #overlay{
 
-    position:absolute;
+    position:fixed;
 
     top:50%;
     left:50%;
 
-    transform:translate(-50%, -50%);
+    transform:translate(-50%,-50%);
 
     width:70vw;
     height:70vw;
@@ -130,20 +136,20 @@ body{
 
 #crosshair{
 
-    position:absolute;
-
-    width:40px;
-    height:40px;
+    position:fixed;
 
     top:50%;
     left:50%;
 
+    width:40px;
+    height:40px;
+
     transform:translate(-50%,-50%);
 
-    z-index:20;
+    z-index:15;
 }
 
-#crosshair:before{
+#crosshair::before{
 
     content:"";
 
@@ -157,7 +163,7 @@ body{
     background:red;
 }
 
-#crosshair:after{
+#crosshair::after{
 
     content:"";
 
@@ -171,19 +177,20 @@ body{
     background:red;
 }
 
-/* Capture Button */
+/* Button */
 
 #captureBtn{
 
-    position:absolute;
+    position:fixed;
 
     bottom:30px;
+
     left:50%;
 
     transform:translateX(-50%);
 
-    width:110px;
-    height:110px;
+    width:120px;
+    height:120px;
 
     border:none;
 
@@ -191,28 +198,44 @@ body{
 
     background:white;
 
-    font-size:18px;
+    font-size:20px;
+
     font-weight:bold;
 
-    z-index:30;
+    z-index:20;
 }
 
-/* Canvas */
+#status{
+
+    text-align:center;
+
+    color:lime;
+}
+
+/* hidden canvas */
 
 canvas{
     display:none;
 }
 
 </style>
+
 </head>
 
 <body>
+
+<video
+id="camera"
+autoplay
+playsinline
+muted>
+</video>
 
 <div id="title">
 CrossCut Camera
 </div>
 
-<div id="controls">
+<div id="panel">
 
 <label>Sample ID</label>
 
@@ -236,12 +259,6 @@ Ready
 
 </div>
 
-<video
-id="camera"
-autoplay
-playsinline>
-</video>
-
 <div id="crosshair"></div>
 
 <div id="overlay"></div>
@@ -254,7 +271,7 @@ Capture
 
 <script>
 
-/* Grid */
+/* 5×5 Grid */
 
 const overlay =
 document.getElementById("overlay");
@@ -270,15 +287,18 @@ for(let i=0;i<25;i++)
     overlay.appendChild(cell);
 }
 
-/* Opacity Control */
+/* Opacity */
 
 document
 .getElementById("opacitySlider")
-.addEventListener("input",function(){
-
-    overlay.style.opacity =
-    this.value / 100;
-});
+.addEventListener(
+    "input",
+    function()
+    {
+        overlay.style.opacity =
+        this.value / 100;
+    }
+);
 
 /* Camera */
 
@@ -287,9 +307,107 @@ document.getElementById("camera");
 
 async function startCamera()
 {
-    try{
-
+    try
+    {
         const stream =
-        await navigator
-        .mediaDevices
-        .getUserMedia
+        await navigator.mediaDevices.getUserMedia({
+            video:true
+        });
+
+        video.srcObject =
+        stream;
+
+        await video.play();
+
+        document.getElementById(
+            "status"
+        ).innerHTML =
+        "Camera Ready";
+    }
+    catch(error)
+    {
+        document.getElementById(
+            "status"
+        ).innerHTML =
+        error.name;
+
+        alert(
+            "Camera Error : " +
+            error.name
+        );
+
+        console.error(error);
+    }
+}
+
+startCamera();
+
+
+/* Capture */
+
+document
+.getElementById("captureBtn")
+.addEventListener(
+    "click",
+    function(){
+
+        const canvas =
+        document.getElementById(
+            "canvas"
+        );
+
+        canvas.width =
+        video.videoWidth;
+
+        canvas.height =
+        video.videoHeight;
+
+        const ctx =
+        canvas.getContext("2d");
+
+        ctx.drawImage(
+            video,
+            0,
+            0
+        );
+
+        const sampleId =
+        document.getElementById(
+            "sampleId"
+        ).value || "Sample";
+
+        const now =
+        new Date();
+
+        const filename =
+        sampleId +
+        "_" +
+        now.getTime() +
+        ".png";
+
+        const a =
+        document.createElement(
+            "a"
+        );
+
+        a.href =
+        canvas.toDataURL(
+            "image/png"
+        );
+
+        a.download =
+        filename;
+
+        a.click();
+
+        document.getElementById(
+            "status"
+        ).innerHTML =
+        "Saved";
+    }
+);
+
+</script>
+
+</body>
+</html>
