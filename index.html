@@ -4,8 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>CrossCut Camera</title>
 
@@ -29,14 +28,9 @@ body{
     position:fixed;
     top:0;
     left:0;
-
     width:100vw;
     height:100vh;
-
     object-fit:cover;
-
-    background:black;
-
     z-index:1;
 }
 
@@ -46,7 +40,7 @@ body{
 
     position:fixed;
 
-    top:15px;
+    top:10px;
 
     width:100%;
 
@@ -54,60 +48,55 @@ body{
 
     color:white;
 
-    font-size:24px;
+    font-size:22px;
 
     font-weight:bold;
 
-    z-index:20;
+    z-index:30;
 }
 
-/* Control Panel */
+/* Panel */
 
 #panel{
 
     position:fixed;
 
-    top:60px;
+    top:50px;
 
-    left:50%;
+    left:10px;
 
-    transform:translateX(-50%);
+    width:180px;
 
-    z-index:20;
+    z-index:30;
 
     background:rgba(0,0,0,0.6);
 
-    padding:10px;
+    color:white;
+
+    padding:8px;
 
     border-radius:10px;
 
-    color:white;
+    font-size:12px;
 
     display:flex;
 
     flex-direction:column;
 
-    gap:8px;
+    gap:6px;
 }
 
-#sampleId{
+#sampleId,
+#gridType{
 
-    width:180px;
-
-    padding:6px;
-
-    border:none;
-
-    border-radius:5px;
+    width:100%;
+    padding:4px;
 }
 
 #status{
 
-    text-align:center;
-
     color:lime;
-
-    font-weight:bold;
+    font-size:11px;
 }
 
 /* Grid */
@@ -121,18 +110,12 @@ body{
 
     transform:translate(-50%,-50%);
 
-    width:70vw;
-    height:70vw;
-
-    max-width:500px;
-    max-height:500px;
+    width:55vw;
+    height:55vw;
 
     border:3px solid lime;
 
     display:grid;
-
-    grid-template-columns:repeat(5,1fr);
-    grid-template-rows:repeat(5,1fr);
 
     z-index:10;
 
@@ -158,10 +141,10 @@ body{
 
     transform:translate(-50%,-50%);
 
-    z-index:15;
+    z-index:20;
 }
 
-#crosshair::before{
+#crosshair:before{
 
     content:"";
 
@@ -175,7 +158,7 @@ body{
     background:red;
 }
 
-#crosshair::after{
+#crosshair:after{
 
     content:"";
 
@@ -201,8 +184,8 @@ body{
 
     transform:translateX(-50%);
 
-    width:120px;
-    height:120px;
+    width:100px;
+    height:100px;
 
     border:none;
 
@@ -210,11 +193,80 @@ body{
 
     background:white;
 
+    color:#007aff;
+
     font-size:20px;
 
     font-weight:bold;
 
-    z-index:20;
+    z-index:30;
+}
+
+/* Preview */
+
+#previewContainer{
+
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    background:rgba(0,0,0,0.95);
+
+    display:none;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:999;
+}
+
+#previewImage{
+
+    width:90%;
+    max-height:70%;
+
+    object-fit:contain;
+
+    border:3px solid white;
+}
+
+#previewButtons{
+
+    margin-top:20px;
+
+    display:flex;
+
+    gap:15px;
+}
+
+#previewButtons button{
+
+    padding:12px 20px;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:16px;
+}
+
+#saveBtn{
+
+    background:#00aa00;
+    color:white;
+}
+
+#retakeBtn{
+
+    background:#cc0000;
+    color:white;
 }
 
 canvas{
@@ -227,11 +279,10 @@ canvas{
 
 <body>
 
-<video
-id="camera"
-autoplay
-playsinline
-muted>
+<video id="camera"
+       autoplay
+       playsinline
+       muted>
 </video>
 
 <div id="title">
@@ -246,6 +297,29 @@ CrossCut Camera
 type="text"
 id="sampleId"
 placeholder="CC001">
+
+<label>Grid Type</label>
+
+<select id="gridType">
+
+<option value="5">
+5 × 5
+</option>
+
+<option value="10">
+10 × 10
+</option>
+
+</select>
+
+<label>Grid Size</label>
+
+<input
+type="range"
+id="sizeSlider"
+min="35"
+max="80"
+value="55">
 
 <label>Grid Opacity</label>
 
@@ -272,24 +346,80 @@ Capture
 
 <canvas id="canvas"></canvas>
 
-<script>
+<div id="previewContainer">
 
-/* Create Grid */
+<img id="previewImage">
+
+<div id="previewButtons">
+
+<button id="saveBtn">
+Save Photo
+</button>
+
+<button id="retakeBtn">
+Retake
+</button>
+
+</div>
+
+</div>
+
+<script>
 
 const overlay =
 document.getElementById("overlay");
 
-for(let i=0;i<25;i++)
+/* GRID */
+
+function createGrid(n)
 {
-    const cell =
-    document.createElement("div");
+    overlay.innerHTML="";
 
-    cell.className = "cell";
+    overlay.style.gridTemplateColumns =
+    `repeat(${n},1fr)`;
 
-    overlay.appendChild(cell);
+    overlay.style.gridTemplateRows =
+    `repeat(${n},1fr)`;
+
+    for(let i=0;i<n*n;i++)
+    {
+        const cell =
+        document.createElement("div");
+
+        cell.className =
+        "cell";
+
+        overlay.appendChild(cell);
+    }
 }
 
-/* Grid Opacity */
+createGrid(5);
+
+/* GRID TYPE */
+
+document
+.getElementById("gridType")
+.addEventListener("change",function(){
+
+    createGrid(
+        parseInt(this.value)
+    );
+});
+
+/* GRID SIZE */
+
+document
+.getElementById("sizeSlider")
+.addEventListener("input",function(){
+
+    overlay.style.width =
+    this.value + "vw";
+
+    overlay.style.height =
+    this.value + "vw";
+});
+
+/* GRID OPACITY */
 
 document
 .getElementById("opacitySlider")
@@ -299,7 +429,7 @@ document
     this.value / 100;
 });
 
-/* Camera */
+/* CAMERA */
 
 const video =
 document.getElementById("camera");
@@ -320,7 +450,8 @@ async function startCamera()
             audio:false
         });
 
-        video.srcObject = stream;
+        video.srcObject =
+        stream;
 
         await video.play();
 
@@ -329,69 +460,38 @@ async function startCamera()
         .innerHTML =
         "Rear Camera Ready";
     }
-
     catch(error)
     {
-
-        try
-        {
-            const fallback =
-            await navigator.mediaDevices.getUserMedia({
-
-                video:true,
-                audio:false
-
-            });
-
-            video.srcObject =
-            fallback;
-
-            await video.play();
-
-            document
-            .getElementById("status")
-            .innerHTML =
-            "Camera Ready";
-        }
-
-        catch(secondError)
-        {
-
-            document
-            .getElementById("status")
-            .innerHTML =
-            secondError.name;
-
-            alert(
-                "Camera Error : " +
-                secondError.name
-            );
-        }
+        document
+        .getElementById("status")
+        .innerHTML =
+        error.name;
     }
 }
 
 startCamera();
 
-/* Capture */
+/* CAPTURE */
+
+const previewContainer =
+document.getElementById(
+    "previewContainer"
+);
+
+const previewImage =
+document.getElementById(
+    "previewImage"
+);
+
+let capturedImageData =
+null;
 
 document
 .getElementById("captureBtn")
 .addEventListener("click",()=>{
 
-    const sampleId =
-
-    document
-    .getElementById("sampleId")
-    .value
-    .trim()
-
-    ||
-
-    "Sample";
-
     const canvas =
-    document
-    .getElementById("canvas");
+    document.getElementById("canvas");
 
     canvas.width =
     video.videoWidth;
@@ -410,51 +510,71 @@ document
         canvas.height
     );
 
-    const now =
-    new Date();
+    capturedImageData =
+    canvas.toDataURL(
+        "image/png"
+    );
 
-    const fileName =
+    previewImage.src =
+    capturedImageData;
 
-        sampleId +
+    previewContainer.style.display =
+    "flex";
 
-        "_" +
+});
 
-        now.getFullYear() +
+/* SAVE */
 
-        ("0"+(now.getMonth()+1)).slice(-2) +
+document
+.getElementById("saveBtn")
+.addEventListener("click",()=>{
 
-        ("0"+now.getDate()).slice(-2) +
+    const sampleId =
 
-        "_" +
+    document
+    .getElementById("sampleId")
+    .value.trim()
 
-        ("0"+now.getHours()).slice(-2) +
+    ||
 
-        ("0"+now.getMinutes()).slice(-2) +
+    "Sample";
 
-        ("0"+now.getSeconds()).slice(-2)
+    const filename =
 
-        +
+    sampleId +
 
-        ".png";
+    "_" +
+
+    Date.now()
+
+    +
+
+    ".png";
 
     const link =
     document.createElement("a");
 
-    link.download =
-    fileName;
-
     link.href =
-    canvas.toDataURL("image/png");
+    capturedImageData;
+
+    link.download =
+    filename;
 
     link.click();
+});
 
-    document
-    .getElementById("status")
-    .innerHTML =
-    "Saved : " + fileName;
+/* RETAKE */
+
+document
+.getElementById("retakeBtn")
+.addEventListener("click",()=>{
+
+    previewContainer.style.display =
+    "none";
 });
 
 </script>
 
 </body>
+
 </html>
