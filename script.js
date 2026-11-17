@@ -1,213 +1,193 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+const overlay =
+document.getElementById("overlay");
+
+const video =
+document.getElementById("camera");
+
+const previewContainer =
+document.getElementById("previewContainer");
+
+const previewImage =
+document.getElementById("previewImage");
+
+let capturedImageData = null;
+
+/* ---------- GRID ---------- */
+
+function createGrid(n)
+{
+    overlay.innerHTML = "";
+
+    overlay.style.gridTemplateColumns =
+    `repeat(${n},1fr)`;
+
+    overlay.style.gridTemplateRows =
+    `repeat(${n},1fr)`;
+
+    for(let i=0;i<n*n;i++)
+    {
+        const cell =
+        document.createElement("div");
+
+        cell.className =
+        "cell";
+
+        overlay.appendChild(cell);
+    }
 }
 
-body{
-    background:black;
-    overflow:hidden;
-    font-family:Arial,sans-serif;
+createGrid(5);
+
+/* ---------- CAMERA ---------- */
+
+async function startCamera()
+{
+    try
+    {
+        const stream =
+        await navigator.mediaDevices.getUserMedia({
+
+            video:{
+                facingMode:{
+                    ideal:"environment"
+                }
+            },
+
+            audio:false
+        });
+
+        video.srcObject =
+        stream;
+
+        await video.play();
+
+        document
+        .getElementById("status")
+        .innerHTML =
+        "Rear Camera Ready";
+    }
+    catch(error)
+    {
+        document
+        .getElementById("status")
+        .innerHTML =
+        error.name;
+    }
 }
 
-#camera{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100vw;
-    height:100vh;
-    object-fit:cover;
-    z-index:1;
-}
+startCamera();
 
-#title{
-    position:fixed;
-    top:8px;
-    width:100%;
-    text-align:center;
-    color:white;
-    font-size:20px;
-    font-weight:bold;
-    z-index:50;
-}
+/* ---------- GRID TYPE ---------- */
 
-#panel{
-    position:fixed;
-    top:40px;
-    left:10px;
+document
+.getElementById("gridType")
+.addEventListener("change",function(){
 
-    width:170px;
+    createGrid(
+        parseInt(this.value)
+    );
+});
 
-    background:rgba(0,0,0,0.65);
+/* ---------- GRID SIZE ---------- */
 
-    color:white;
+document
+.getElementById("sizeSlider")
+.addEventListener("input",function(){
 
-    padding:8px;
+    overlay.style.width =
+    this.value + "vw";
 
-    border-radius:10px;
+    overlay.style.height =
+    this.value + "vw";
+});
 
-    font-size:11px;
+/* ---------- OPACITY ---------- */
 
-    display:flex;
-    flex-direction:column;
-    gap:6px;
+document
+.getElementById("opacitySlider")
+.addEventListener("input",function(){
 
-    z-index:50;
-}
+    overlay.style.opacity =
+    this.value / 100;
+});
 
-#panel input,
-#panel select{
-    width:100%;
-}
+/* ---------- CAPTURE ---------- */
 
-#status{
-    text-align:center;
-    color:lime;
-}
+document
+.getElementById("captureBtn")
+.addEventListener("click",()=>{
 
-#overlay{
-    position:fixed;
+    const canvas =
+    document.getElementById("canvas");
 
-    top:50%;
-    left:50%;
+    canvas.width =
+    video.videoWidth;
 
-    transform:translate(-50%,-50%);
+    canvas.height =
+    video.videoHeight;
 
-    width:30vw;
-    height:30vw;
+    const ctx =
+    canvas.getContext("2d");
 
-    border:3px solid lime;
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
-    display:grid;
+    capturedImageData =
+    canvas.toDataURL(
+        "image/png"
+    );
 
-    z-index:10;
+    previewImage.src =
+    capturedImageData;
 
-    pointer-events:none;
-}
+    previewContainer.style.display =
+    "flex";
+});
 
-.cell{
-    border:1px solid rgba(0,255,0,0.7);
-}
+/* ---------- SAVE ---------- */
 
-#crosshair{
+document
+.getElementById("saveBtn")
+.addEventListener("click",()=>{
 
-    position:fixed;
+    const sampleId =
+    document
+    .getElementById("sampleId")
+    .value.trim()
 
-    top:50%;
-    left:50%;
+    ||
 
-    width:40px;
-    height:40px;
+    "Sample";
 
-    transform:translate(-50%,-50%);
+    const filename =
+    sampleId +
+    "_" +
+    Date.now() +
+    ".png";
 
-    z-index:30;
-}
+    const link =
+    document.createElement("a");
 
-#crosshair:before{
-    content:"";
-    position:absolute;
-    left:50%;
-    width:2px;
-    height:100%;
-    background:red;
-}
+    link.href =
+    capturedImageData;
 
-#crosshair:after{
-    content:"";
-    position:absolute;
-    top:50%;
-    width:100%;
-    height:2px;
-    background:red;
-}
+    link.download =
+    filename;
 
-#captureBtn{
+    link.click();
+});
 
-    position:fixed;
+/* ---------- RETAKE ---------- */
 
-    bottom:20px;
-    left:50%;
+document
+.getElementById("retakeBtn")
+.addEventListener("click",()=>{
 
-    transform:translateX(-50%);
-
-    width:90px;
-    height:90px;
-
-    border:none;
-
-    border-radius:50%;
-
-    background:white;
-
-    font-size:18px;
-    font-weight:bold;
-
-    color:#007aff;
-
-    z-index:50;
-}
-
-canvas{
-    display:none;
-}
-
-#previewContainer{
-
-    position:fixed;
-
-    inset:0;
-
-    background:rgba(0,0,0,0.95);
-
-    display:none;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    align-items:center;
-
-    z-index:999;
-}
-
-#previewImage{
-
-    width:90%;
-
-    max-height:70%;
-
-    object-fit:contain;
-
-    border:2px solid white;
-}
-
-#previewButtons{
-
-    display:flex;
-
-    gap:20px;
-
-    margin-top:20px;
-}
-
-#previewButtons button{
-
-    padding:12px 20px;
-
-    border:none;
-
-    border-radius:10px;
-
-    font-size:16px;
-}
-
-#saveBtn{
-    background:#00aa00;
-    color:white;
-}
-
-#retakeBtn{
-    background:#cc0000;
-    color:white;
-}
+    previewContainer.style.display =
+    "none";
+});
