@@ -15,12 +15,13 @@
 }
 
 body{
-    overflow:hidden;
     background:black;
-    font-family:Arial,sans-serif;
+    overflow:hidden;
+    font-family:Arial, sans-serif;
 }
 
 /* Camera */
+
 #camera{
     position:absolute;
     width:100%;
@@ -29,25 +30,78 @@ body{
 }
 
 /* Title */
+
 #title{
     position:absolute;
-    top:15px;
+    top:10px;
     width:100%;
     text-align:center;
     color:white;
     font-size:24px;
     font-weight:bold;
-    z-index:20;
+    z-index:30;
 }
 
-/* 5x5 Grid */
+/* Controls */
+
+#controls{
+
+    position:absolute;
+    top:55px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    z-index:30;
+
+    background:rgba(0,0,0,0.6);
+
+    padding:10px;
+
+    border-radius:10px;
+
+    display:flex;
+    flex-direction:column;
+
+    gap:8px;
+
+    color:white;
+}
+
+#controls label{
+    font-size:14px;
+}
+
+#sampleId{
+
+    width:180px;
+
+    padding:6px;
+
+    border:none;
+
+    border-radius:5px;
+}
+
+/* Status */
+
+#status{
+
+    text-align:center;
+    color:lime;
+    font-weight:bold;
+}
+
+/* Grid */
+
 #overlay{
+
     position:absolute;
 
     top:50%;
     left:50%;
 
-    transform:translate(-50%,-50%);
+    transform:translate(-50%, -50%);
 
     width:70vw;
     height:70vw;
@@ -63,16 +117,19 @@ body{
     grid-template-rows:repeat(5,1fr);
 
     z-index:10;
+
     pointer-events:none;
 }
 
 .cell{
+
     border:1px solid rgba(0,255,0,0.7);
 }
 
-/* Center Crosshair */
+/* Crosshair */
 
 #crosshair{
+
     position:absolute;
 
     width:40px;
@@ -83,15 +140,16 @@ body{
 
     transform:translate(-50%,-50%);
 
-    z-index:15;
+    z-index:20;
 }
 
 #crosshair:before{
+
     content:"";
+
     position:absolute;
 
     left:50%;
-    top:0;
 
     width:2px;
     height:100%;
@@ -100,11 +158,12 @@ body{
 }
 
 #crosshair:after{
+
     content:"";
+
     position:absolute;
 
     top:50%;
-    left:0;
 
     width:100%;
     height:2px;
@@ -118,7 +177,7 @@ body{
 
     position:absolute;
 
-    bottom:35px;
+    bottom:30px;
     left:50%;
 
     transform:translateX(-50%);
@@ -126,19 +185,19 @@ body{
     width:110px;
     height:110px;
 
-    border-radius:50%;
-
     border:none;
+
+    border-radius:50%;
 
     background:white;
 
     font-size:18px;
     font-weight:bold;
 
-    cursor:pointer;
-
-    z-index:20;
+    z-index:30;
 }
+
+/* Canvas */
 
 canvas{
     display:none;
@@ -151,6 +210,30 @@ canvas{
 
 <div id="title">
 CrossCut Camera
+</div>
+
+<div id="controls">
+
+<label>Sample ID</label>
+
+<input
+type="text"
+id="sampleId"
+placeholder="CC001">
+
+<label>Grid Opacity</label>
+
+<input
+type="range"
+id="opacitySlider"
+min="10"
+max="100"
+value="70">
+
+<div id="status">
+Ready
+</div>
+
 </div>
 
 <video
@@ -171,82 +254,42 @@ Capture
 
 <script>
 
-// Grid 생성
+/* Grid */
 
-const overlay=document.getElementById("overlay");
+const overlay =
+document.getElementById("overlay");
 
 for(let i=0;i<25;i++)
 {
-    const cell=document.createElement("div");
-    cell.className="cell";
+    const cell =
+    document.createElement("div");
+
+    cell.className =
+    "cell";
+
     overlay.appendChild(cell);
 }
 
-// Camera Start
+/* Opacity Control */
 
-const video=document.getElementById("camera");
+document
+.getElementById("opacitySlider")
+.addEventListener("input",function(){
+
+    overlay.style.opacity =
+    this.value / 100;
+});
+
+/* Camera */
+
+const video =
+document.getElementById("camera");
 
 async function startCamera()
 {
-    try
-    {
-        const stream=
-        await navigator.mediaDevices.getUserMedia({
-            video:{
-                facingMode:"environment"
-            }
-        });
+    try{
 
-        video.srcObject=stream;
-    }
-    catch(error)
-    {
-        alert("Camera Access Failed");
-    }
-}
-
-startCamera();
-
-
-// Capture
-
-document
-.getElementById("captureBtn")
-.addEventListener("click",()=>{
-
-    const canvas=
-    document.getElementById("canvas");
-
-    canvas.width=
-    video.videoWidth;
-
-    canvas.height=
-    video.videoHeight;
-
-    const ctx=
-    canvas.getContext("2d");
-
-    ctx.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    const link=
-    document.createElement("a");
-
-    link.download=
-    `CrossCut_${Date.now()}.png`;
-
-    link.href=
-    canvas.toDataURL("image/png");
-
-    link.click();
-});
-
-</script>
-
-</body>
-</html>
+        const stream =
+        await navigator
+        .mediaDevices
+        .getUserMedia
