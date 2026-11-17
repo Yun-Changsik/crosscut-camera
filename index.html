@@ -4,7 +4,6 @@
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport"
       content="width=device-width, initial-scale=1.0">
 
@@ -62,7 +61,7 @@ body{
     z-index:20;
 }
 
-/* Sample Box */
+/* Control Panel */
 
 #panel{
 
@@ -96,6 +95,19 @@ body{
     width:180px;
 
     padding:6px;
+
+    border:none;
+
+    border-radius:5px;
+}
+
+#status{
+
+    text-align:center;
+
+    color:lime;
+
+    font-weight:bold;
 }
 
 /* Grid */
@@ -177,7 +189,7 @@ body{
     background:red;
 }
 
-/* Button */
+/* Capture Button */
 
 #captureBtn{
 
@@ -204,15 +216,6 @@ body{
 
     z-index:20;
 }
-
-#status{
-
-    text-align:center;
-
-    color:lime;
-}
-
-/* hidden canvas */
 
 canvas{
     display:none;
@@ -254,7 +257,7 @@ max="100"
 value="70">
 
 <div id="status">
-Ready
+Starting...
 </div>
 
 </div>
@@ -271,7 +274,7 @@ Capture
 
 <script>
 
-/* 5×5 Grid */
+/* Create Grid */
 
 const overlay =
 document.getElementById("overlay");
@@ -281,24 +284,20 @@ for(let i=0;i<25;i++)
     const cell =
     document.createElement("div");
 
-    cell.className =
-    "cell";
+    cell.className = "cell";
 
     overlay.appendChild(cell);
 }
 
-/* Opacity */
+/* Grid Opacity */
 
 document
 .getElementById("opacitySlider")
-.addEventListener(
-    "input",
-    function()
-    {
-        overlay.style.opacity =
-        this.value / 100;
-    }
-);
+.addEventListener("input",function(){
+
+    overlay.style.opacity =
+    this.value / 100;
+});
 
 /* Camera */
 
@@ -311,101 +310,149 @@ async function startCamera()
     {
         const stream =
         await navigator.mediaDevices.getUserMedia({
-            video:true
+
+            video:{
+                facingMode:{
+                    ideal:"environment"
+                }
+            },
+
+            audio:false
         });
 
-        video.srcObject =
-        stream;
+        video.srcObject = stream;
 
         await video.play();
 
-        document.getElementById(
-            "status"
-        ).innerHTML =
-        "Camera Ready";
+        document
+        .getElementById("status")
+        .innerHTML =
+        "Rear Camera Ready";
     }
+
     catch(error)
     {
-        document.getElementById(
-            "status"
-        ).innerHTML =
-        error.name;
 
-        alert(
-            "Camera Error : " +
-            error.name
-        );
+        try
+        {
+            const fallback =
+            await navigator.mediaDevices.getUserMedia({
 
-        console.error(error);
+                video:true,
+                audio:false
+
+            });
+
+            video.srcObject =
+            fallback;
+
+            await video.play();
+
+            document
+            .getElementById("status")
+            .innerHTML =
+            "Camera Ready";
+        }
+
+        catch(secondError)
+        {
+
+            document
+            .getElementById("status")
+            .innerHTML =
+            secondError.name;
+
+            alert(
+                "Camera Error : " +
+                secondError.name
+            );
+        }
     }
 }
 
 startCamera();
 
-
 /* Capture */
 
 document
 .getElementById("captureBtn")
-.addEventListener(
-    "click",
-    function(){
+.addEventListener("click",()=>{
 
-        const canvas =
-        document.getElementById(
-            "canvas"
-        );
+    const sampleId =
 
-        canvas.width =
-        video.videoWidth;
+    document
+    .getElementById("sampleId")
+    .value
+    .trim()
 
-        canvas.height =
-        video.videoHeight;
+    ||
 
-        const ctx =
-        canvas.getContext("2d");
+    "Sample";
 
-        ctx.drawImage(
-            video,
-            0,
-            0
-        );
+    const canvas =
+    document
+    .getElementById("canvas");
 
-        const sampleId =
-        document.getElementById(
-            "sampleId"
-        ).value || "Sample";
+    canvas.width =
+    video.videoWidth;
 
-        const now =
-        new Date();
+    canvas.height =
+    video.videoHeight;
 
-        const filename =
+    const ctx =
+    canvas.getContext("2d");
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    const now =
+    new Date();
+
+    const fileName =
+
         sampleId +
+
         "_" +
-        now.getTime() +
+
+        now.getFullYear() +
+
+        ("0"+(now.getMonth()+1)).slice(-2) +
+
+        ("0"+now.getDate()).slice(-2) +
+
+        "_" +
+
+        ("0"+now.getHours()).slice(-2) +
+
+        ("0"+now.getMinutes()).slice(-2) +
+
+        ("0"+now.getSeconds()).slice(-2)
+
+        +
+
         ".png";
 
-        const a =
-        document.createElement(
-            "a"
-        );
+    const link =
+    document.createElement("a");
 
-        a.href =
-        canvas.toDataURL(
-            "image/png"
-        );
+    link.download =
+    fileName;
 
-        a.download =
-        filename;
+    link.href =
+    canvas.toDataURL("image/png");
 
-        a.click();
+    link.click();
 
-        document.getElementById(
-            "status"
-        ).innerHTML =
-        "Saved";
-    }
-);
+    document
+    .getElementById("status")
+    .innerHTML =
+    "Saved : " + fileName;
+});
 
 </script>
 
