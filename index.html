@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Cross Cut Camera</title>
+<title>CrossCut Camera</title>
 
 <style>
 
@@ -15,26 +15,39 @@
 }
 
 body{
-    background:black;
     overflow:hidden;
-    font-family:Arial, sans-serif;
+    background:black;
+    font-family:Arial,sans-serif;
 }
 
-/* 카메라 화면 */
+/* Camera */
 #camera{
     position:absolute;
     width:100%;
     height:100%;
     object-fit:cover;
-    z-index:1;
 }
 
-/* Grid 영역 */
+/* Title */
+#title{
+    position:absolute;
+    top:15px;
+    width:100%;
+    text-align:center;
+    color:white;
+    font-size:24px;
+    font-weight:bold;
+    z-index:20;
+}
+
+/* 5x5 Grid */
 #overlay{
     position:absolute;
+
     top:50%;
     left:50%;
-    transform:translate(-50%, -50%);
+
+    transform:translate(-50%,-50%);
 
     width:70vw;
     height:70vw;
@@ -45,75 +58,35 @@ body{
     border:3px solid lime;
 
     display:grid;
+
     grid-template-columns:repeat(5,1fr);
     grid-template-rows:repeat(5,1fr);
 
     z-index:10;
-
     pointer-events:none;
 }
 
-/* Grid 셀 */
 .cell{
     border:1px solid rgba(0,255,0,0.7);
 }
 
-/* 제목 */
-#title{
-    position:absolute;
-    top:20px;
-    width:100%;
-    text-align:center;
+/* Center Crosshair */
 
-    color:white;
-    font-size:24px;
-    font-weight:bold;
-
-    z-index:20;
-}
-
-/* 촬영 버튼 */
-#captureBtn{
-
+#crosshair{
     position:absolute;
 
-    bottom:40px;
-    left:50%;
-
-    transform:translateX(-50%);
-
-    width:90px;
-    height:90px;
-
-    border-radius:50%;
-    border:none;
-
-    background:white;
-
-    font-size:18px;
-    font-weight:bold;
-
-    z-index:20;
-
-    cursor:pointer;
-}
-
-/* 가운데 십자선 */
-#centerCross{
-    position:absolute;
+    width:40px;
+    height:40px;
 
     top:50%;
     left:50%;
 
     transform:translate(-50%,-50%);
 
-    width:30px;
-    height:30px;
-
     z-index:15;
 }
 
-#centerCross::before{
+#crosshair:before{
     content:"";
     position:absolute;
 
@@ -126,7 +99,7 @@ body{
     background:red;
 }
 
-#centerCross::after{
+#crosshair:after{
     content:"";
     position:absolute;
 
@@ -139,34 +112,69 @@ body{
     background:red;
 }
 
+/* Capture Button */
+
+#captureBtn{
+
+    position:absolute;
+
+    bottom:35px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    width:110px;
+    height:110px;
+
+    border-radius:50%;
+
+    border:none;
+
+    background:white;
+
+    font-size:18px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    z-index:20;
+}
+
+canvas{
+    display:none;
+}
+
 </style>
 </head>
 
 <body>
 
 <div id="title">
-Cross Cut Camera
+CrossCut Camera
 </div>
 
 <video
-    id="camera"
-    autoplay
-    playsinline>
+id="camera"
+autoplay
+playsinline>
 </video>
 
-<div id="centerCross"></div>
+<div id="crosshair"></div>
 
 <div id="overlay"></div>
 
 <button id="captureBtn">
-촬영
+Capture
 </button>
+
+<canvas id="canvas"></canvas>
 
 <script>
 
-const overlay = document.getElementById("overlay");
+// Grid 생성
 
-/* 5×5 Grid 생성 */
+const overlay=document.getElementById("overlay");
+
 for(let i=0;i<25;i++)
 {
     const cell=document.createElement("div");
@@ -174,36 +182,68 @@ for(let i=0;i<25;i++)
     overlay.appendChild(cell);
 }
 
-/* 카메라 시작 */
+// Camera Start
+
+const video=document.getElementById("camera");
+
 async function startCamera()
 {
     try
     {
-        const stream =
+        const stream=
         await navigator.mediaDevices.getUserMedia({
             video:{
                 facingMode:"environment"
             }
         });
 
-        document.getElementById("camera").srcObject=stream;
+        video.srcObject=stream;
     }
-    catch(err)
+    catch(error)
     {
-        alert("카메라 접근 실패");
-        console.error(err);
+        alert("Camera Access Failed");
     }
 }
 
 startCamera();
 
-/* 촬영 버튼 (현재는 테스트용) */
 
-document.getElementById("captureBtn")
+// Capture
+
+document
+.getElementById("captureBtn")
 .addEventListener("click",()=>{
 
-    alert("촬영 기능은 다음 단계에서 추가");
+    const canvas=
+    document.getElementById("canvas");
 
+    canvas.width=
+    video.videoWidth;
+
+    canvas.height=
+    video.videoHeight;
+
+    const ctx=
+    canvas.getContext("2d");
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    const link=
+    document.createElement("a");
+
+    link.download=
+    `CrossCut_${Date.now()}.png`;
+
+    link.href=
+    canvas.toDataURL("image/png");
+
+    link.click();
 });
 
 </script>
