@@ -12,6 +12,8 @@ document.getElementById("previewImage");
 
 let capturedImageData = null;
 
+let currentTrack = null;
+
 /* ---------- GRID ---------- */
 
 function createGrid(n)
@@ -59,7 +61,14 @@ async function startCamera()
         video.srcObject =
         stream;
 
+        currentTrack =
+        stream.getVideoTracks()[0];
+
         await video.play();
+
+        console.log(
+            currentTrack.getCapabilities()
+        );
 
         document
         .getElementById("status")
@@ -86,6 +95,7 @@ document
     createGrid(
         parseInt(this.value)
     );
+
 });
 
 /* ---------- GRID SIZE ---------- */
@@ -99,6 +109,7 @@ document
 
     overlay.style.height =
     this.value + "vw";
+
 });
 
 /* ---------- OPACITY ---------- */
@@ -109,7 +120,61 @@ document
 
     overlay.style.opacity =
     this.value / 100;
+
 });
+
+/* ---------- ZOOM ---------- */
+
+document
+.getElementById("zoomSlider")
+.addEventListener(
+    "input",
+    async function()
+    {
+
+        const zoom =
+        parseFloat(
+            this.value
+        );
+
+        document
+        .getElementById("zoomValue")
+        .innerHTML =
+        zoom.toFixed(1) + "x";
+
+        if(!currentTrack)
+        {
+            return;
+        }
+
+        const capabilities =
+        currentTrack.getCapabilities();
+
+        if(capabilities.zoom)
+        {
+            try
+            {
+                await currentTrack
+                .applyConstraints({
+
+                    advanced:[
+                        {
+                            zoom:zoom
+                        }
+                    ]
+
+                });
+            }
+            catch(error)
+            {
+                console.log(
+                    "Zoom Error",
+                    error
+                );
+            }
+        }
+    }
+);
 
 /* ---------- CAPTURE ---------- */
 
@@ -147,6 +212,7 @@ document
 
     previewContainer.style.display =
     "flex";
+
 });
 
 /* ---------- SAVE ---------- */
@@ -180,6 +246,7 @@ document
     filename;
 
     link.click();
+
 });
 
 /* ---------- RETAKE ---------- */
@@ -190,4 +257,5 @@ document
 
     previewContainer.style.display =
     "none";
+
 });
